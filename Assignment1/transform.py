@@ -93,12 +93,12 @@ def cs4243_guassian_kernel(ksize, sigma):
     :return kernel: numpy.ndarray of shape (ksize, ksize)
     """
     kernel = np.zeros((ksize, ksize), dtype=np.float64)
+    mid = math.ceil(ksize / 2)
 
-    for x in range(ksize):
-        for y in range(ksize):
-            kernel[x, y] = np.exp(((x - ksize//2)**2 + (y - ksize//2)**2) /
+    for y in range(ksize):
+        for x in range(ksize):
+            kernel[y, x] = np.exp(((x+1 - mid)**2 + (y+1 - mid)**2) /
                                   (-2 * sigma ** 2))
-
     return kernel / kernel.sum()
 
 
@@ -182,14 +182,13 @@ def cs4243_filter_faster(image, kernel):
     Hi, Wi = image.shape
     Hk, Wk = kernel.shape
     kernel = cs4243_rotate180(kernel).reshape((Hk * Wk, 1))
-    image = pad_zeros(image, Wk // 2, Hk // 2)
+    image = pad_zeros(image, Hk // 2, Wk // 2)
 
-    extracted_kenels = np.zeros((Hi * Wi, Hk * Wk))
+    windows = np.zeros((Hi * Wi, Hk * Wk))
     for y in range(Hi):
         for x in range(Wi):
-            extracted_kenels[x + y * Hi] = image[x:x + Wk,
-                                                 y:y + Hk].reshape((Hk * Wk))
-    return np.matmul(extracted_kenels, kernel).reshape((Hi, Wi)).transpose()
+            windows[x + y * Hi] = image[y:y + Hk, x:x + Wk].reshape((Hk * Wk))
+    return np.matmul(windows, kernel).reshape((Hi, Wi))
 
 
 def cs4243_downsample(image, ratio):
