@@ -1,4 +1,4 @@
-This assignment is due on 29/08/2019 23:59. Please zip this folder and name it your_student_ID.zip
+uThis assignment is due on 29/08/2019 23:59. Please zip this folder and name it your_student_ID.zip
 e.g., A0186989W.zip, and submit it via LumiNUS LAB1_submissions
 ###########################################
 ASSIGNMENT1
