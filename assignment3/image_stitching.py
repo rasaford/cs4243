@@ -265,8 +265,18 @@ def sift_descriptor(patch):
     dy = filters.sobel_h(patch)
     histogram = np.zeros((4, 4, 8))
 
-    # YOUR CODE HERE
-    raise NotImplementedError()  # Delete this line
-    # END YOUR CODE
+    h, w = patch.shape[:2]
+    for y in range(h // 4):
+        for x in range(w // 8):
+            dy_w = dy[y * 4: (y + 1) * 4,
+                      x * 4: (x + 1) * 4].ravel()
+            dx_w = dx[y * 4: (y + 1) * 4,
+                      x * 4: (x + 1) * 4].ravel()
+            mag_w = np.sqrt(dx_w * dx_w + dy_w * dy_w)
+            dirs = ((np.arctan2(dy_w, dx_w) + np.pi * 4)
+                    / np.pi).astype(int)
+            histogram[y, x] = np.bincount(dirs, weights=mag_w, minlength=8)
 
+    feature = np.reshape(histogram, (128,))
+    feature /= np.linalg.norm(feature)
     return feature
