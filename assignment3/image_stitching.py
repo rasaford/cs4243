@@ -16,7 +16,7 @@ def harris_corners(img, window_size=3, k=0.04):
     Hint:
         You may use the function scipy.ndimage.filters.convolve, 
         which is already imported above
-        
+
     Args:
         img: Grayscale image of shape (H, W)
         window_size: size of the window function
@@ -34,9 +34,21 @@ def harris_corners(img, window_size=3, k=0.04):
     dx = filters.sobel_v(img)
     dy = filters.sobel_h(img)
 
-    ### YOUR CODE HERE
-    raise NotImplementedError() # Delete this line
-    ### END YOUR CODE
+    # create weight matrix (only works for odd kernel sizes)
+    w = np.zeros((window_size, window_size))
+    w[window_size//2, window_size//2] = 1
+    w = filters.gaussian(w, sigma=3)
+
+    # filter derivates with kernel
+    dx2 = convolve(dx * dx, w)
+    dy2 = convolve(dy * dy, w)
+    dxy = convolve(dx * dy, w)
+
+    for y in range(H):
+        for x in range(W):
+            det = dx2[y, x] * dy2[y, x] - dxy[y, x] * dxy[y, x]
+            trace = k * (dx2[y, x] + dy2[y, x]) ** 2
+            response[y, x] = det - trace
 
     return response
 
@@ -46,26 +58,25 @@ def simple_descriptor(patch):
     Describe the patch by normalizing the image values into a standard 
     normal distribution (having mean of 0 and standard deviation of 1) 
     and then flattening into a 1D array. 
-    
+
     The normalization will make the descriptor more robust to change 
     in lighting condition.
-    
+
     Hint:
         If a denominator is zero, divide by 1 instead.
-    
+
     Args:
         patch: grayscale image patch of shape (h, w)
-    
+
     Returns:
         feature: 1D array of shape (h * w)
     """
-    feature = []
-    
-    ### YOUR CODE HERE
-    raise NotImplementedError() # Delete this line
-    ### END YOUR CODE
-    
-    return feature
+
+    h, w = patch.shape
+    patch = np.reshape(patch, (h * w))
+    mean = np.mean(patch, dtype=np.float64)
+    std = np.std(patch, dtype=np.float64)
+    return (patch - mean) / std
 
 
 def describe_keypoints(image, keypoints, desc_func, patch_size=16):
@@ -76,7 +87,7 @@ def describe_keypoints(image, keypoints, desc_func, patch_size=16):
         desc_func: function that takes in an image patch and outputs
             a 1D feature vector describing the patch
         patch_size: size of a square patch at each keypoint
-                
+
     Returns:
         desc: array of features describing the keypoints
     """
@@ -98,38 +109,43 @@ def match_descriptors(desc1, desc2, threshold=0.5):
     when the distance to the closest vector is much smaller than the distance to the 
     second-closest, that is, the ratio of the distances should be smaller
     than the threshold. Return the matches as pairs of vector indices.
-    
+
     Hint: 
         You may use `scipy.spatial.distance.cdist` to compute distance between desc1 
         and desc2, which is already imported above
-    
+
     Args:
         desc1: an array of shape (M, P) holding descriptors of size P about M keypoints
         desc2: an array of shape (N, P) holding descriptors of size P about N keypoints
-        
+
     Returns:
         matches: an array of shape (Q, 2) where each row holds the indices of one pair 
         of matching descriptors
     """
     matches = []
-    
+
     M = desc1.shape[0]
     N = desc2.shape[0]
 
-    ### YOUR CODE HERE
-    raise NotImplementedError() # Delete this line
-    ### END YOUR CODE
-    
-    return matches
+    distances = cdist(desc1, desc2)
+
+    matches = []
+    for m in range(M):
+        min_idx = (m, np.argpartition(distances[m], 0)[0])
+        min2_idx = (m, np.argpartition(distances[m], 1)[1])
+        if distances[min_idx] / distances[min2_idx] < threshold:
+            matches.append(min_idx)
+
+    return np.array(matches)
 
 
 def fit_affine_matrix(p1, p2):
     """ Fit affine matrix such that p2 * H = p1 
-    
+
     Args:
         p1: an array of shape (M, P)
         p2: an array of shape (M, P)
-        
+
     Return:
         H: a matrix of shape (P * P) that transform p2 to p1.
     """
@@ -143,7 +159,7 @@ def fit_affine_matrix(p1, p2):
 
     # Sometimes numerical issues cause least-squares to produce the last
     # column which is not exactly [0, 0, 1]
-    H[:,2] = np.array([0, 0, 1])
+    H[:, 2] = np.array([0, 0, 1])
     return H
 
 
@@ -172,17 +188,35 @@ def ransac(keypoints1, keypoints2, matches, n_iters=200, threshold=20):
     N = matches.shape[0]
     n_samples = int(N * 0.2)
 
-    matched1 = pad(keypoints1[matches[:,0]])
-    matched2 = pad(keypoints2[matches[:,1]])
+    matched1 = pad(keypoints1[matches[:, 0]])
+    matched2 = pad(keypoints2[matches[:, 1]])
 
     max_inliers = np.zeros(N)
-    n_inliers = 0
 
-    # RANSAC iteration start
-    ### YOUR CODE HERE
-    raise NotImplementedError() # Delete this line
-    ### END YOUR CODE
-    
+    n_inliers = 0
+    H = None
+
+    for i in range(n_iters):
+        # draw random matches
+        rand_idx = np.random.randint(N, size=4)
+        pts_idx = matches[rand_idx]
+        p1 = keypoints1[pts_idx[:, 0]]
+        p2 = keypoints2[pts_idx[:, 1]]
+
+        # fit model  p2 * H = p1
+        Hp = fit_affine_matrix(p1, p2)
+
+        # compute inliers
+        inliers = np.array([idx for idx, (m1, m2)
+                            in enumerate(zip(np.dot(matched2, Hp), matched1))
+                            if np.linalg.norm(m1 - m2) < threshold])
+
+        # maximize number of inliers
+        if inliers.shape[0] > n_inliers:
+            H = Hp
+            n_inliers = inliers.shape[0]
+            max_inliers = inliers
+
     return H, matches[max_inliers]
 
 
@@ -190,7 +224,7 @@ def sift_descriptor(patch):
     """
     Implement a simplifed version of Scale-Invariant Feature Transform (SIFT).
     Paper reference: https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf
-    
+
     Your implementation does not need to exactly match the SIFT reference.
     Here are the key properties your (baseline) descriptor should have:
     (1) a 4x4 grid of cells, each length of 16/4=4. It is simply the
@@ -226,13 +260,13 @@ def sift_descriptor(patch):
     Returns:
         feature: 1D array of shape (128, )
     """
-    
+
     dx = filters.sobel_v(patch)
     dy = filters.sobel_h(patch)
-    histogram = np.zeros((4,4,8))
-    
-    ### YOUR CODE HERE
-    raise NotImplementedError() # Delete this line
-    ### END YOUR CODE
-    
+    histogram = np.zeros((4, 4, 8))
+
+    # YOUR CODE HERE
+    raise NotImplementedError()  # Delete this line
+    # END YOUR CODE
+
     return feature
