@@ -215,7 +215,7 @@ def ransac(keypoints1, keypoints2, matches, n_iters=200, threshold=20):
         if inliers.shape[0] > n_inliers:
             H = Hp
             n_inliers = inliers.shape[0]
-            max_inliers = inliers
+            max_inliers = rand_idx
 
     return H, matches[max_inliers]
 
