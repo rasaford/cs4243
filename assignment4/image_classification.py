@@ -1,10 +1,13 @@
 import numpy as np
+from skimage import filters
 from scipy.spatial.distance import cdist
 from sklearn.svm import LinearSVC, SVC
 from utils import load_image_gray
 import cyvlfeat as vlfeat
 import pickle
 import math
+import multiprocessing as mp
+
 
 def build_vocabulary(image_paths, vocab_size):
     """
@@ -56,21 +59,149 @@ def build_vocabulary(image_paths, vocab_size):
     # images, cluster them with kmeans. The resulting centroids are now your
     # visual word vocabulary.
 
-    dim = 128      # length of the SIFT descriptors that you are going to compute.
-    vocab = np.zeros((vocab_size,dim))
-    total_SIFT_features = np.zeros((20*len(image_paths), dim))
+    # length of the SIFT descriptors that you are going to compute.
 
-    #############################################################################
-    # TODO: YOUR CODE HERE                                                      #
-    #############################################################################
+    dim = 128
+    subsample = 20
+#     vocab = np.zeros((vocab_size, dim))
+    sift_features = np.zeros((subsample * len(image_paths), dim))
+    for idx, p in enumerate(image_paths):
+        img_gray = load_image_gray(p)
+        _, descriptors = vlfeat.sift.dsift(img_gray, step=16, fast=True)
 
-    raise NotImplementedError('`build_vocabulary` function needs to be implemented')
+        indizes = np.random.randint(
+            low=0, high=descriptors.shape[0], size=subsample)
+        for i, j in enumerate(indizes):
+            sift_features[i + subsample * idx] = descriptors[j]
 
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
+    return vlfeat.kmeans.kmeans(sift_features, vocab_size, algorithm='ELKAN')
 
-    return vocab
+
+def dense_sift(img, vocab):
+    hist = np.zeros(vocab.shape[0])
+    _, descriptors = vlfeat.sift.dsift(img, step=4, fast=True)
+    D = cdist(descriptors, vocab)
+
+    for row in range(D.shape[0]):
+        hist[np.argmin(D[row])] += 1
+
+    return hist / np.linalg.norm(hist)
+
+
+def sift_descriptor(patch):
+    """
+    Implement a simplifed version of Scale-Invariant Feature Transform (SIFT).
+    Paper reference: https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf
+
+    Your implementation does not need to exactly match the SIFT reference.
+    Here are the key properties your (baseline) descriptor should have:
+    (1) a 4x4 grid of cells, each length of 16/4=4. It is simply the
+        terminology used in the feature literature to describe the spatial
+        bins where gradient distributions will be described.
+    (2) each cell should have a histogram of the local distribution of
+        gradients in 8 orientations. Appending these histograms together will
+        give you 4x4 x 8 = 128 dimensions.
+    (3) Each feature should be normalized to unit length.
+
+    You do not need to perform the interpolation in which each gradient
+    measurement contributes to multiple orientation bins in multiple cells
+    As described in Szeliski, a single gradient measurement creates a
+    weighted contribution to the 4 nearest cells and the 2 nearest
+    orientation bins within each cell, for 8 total contributions. This type
+    of interpolation probably will help, though.
+
+    You do not have to explicitly compute the gradient orientation at each
+    pixel (although you are free to do so). You can instead filter with
+    oriented filters (e.g. a filter that responds to edges with a specific
+    orientation). All of your SIFT-like feature can be constructed entirely
+    from filtering fairly quickly in this way.
+
+    You do not need to do the normalize -> threshold -> normalize again
+    operation as detailed in Szeliski and the SIFT paper. It can help, though.
+
+    Another simple trick which can help is to raise each element of the final
+    feature vector to some power that is less than one.
+
+    Args:
+        patch: grayscale image patch of shape (h, w)
+
+    Returns:
+        feature: 1D array of shape (128, )
+    """
+
+    dx = filters.sobel_v(patch)
+    dy = filters.sobel_h(patch)
+    histogram = np.zeros((4, 4, 8))
+
+    h, w = patch.shape[:2]
+    for y in range(h // 4):
+        for x in range(w // 8):
+            dy_w = dy[y * 4: (y + 1) * 4,
+                      x * 4: (x + 1) * 4].ravel()
+            dx_w = dx[y * 4: (y + 1) * 4,
+                      x * 4: (x + 1) * 4].ravel()
+            mag_w = np.sqrt(dx_w * dx_w + dy_w * dy_w)
+            dirs = ((np.arctan2(dy_w, dx_w) + np.pi * 4)
+                    / np.pi).astype(int)
+            histogram[y, x] = np.bincount(dirs, weights=mag_w, minlength=8)
+
+    feature = np.reshape(histogram, (128,))
+    feature /= np.linalg.norm(feature)
+    return feature
+
+
+def simple_sift_image(img, step=16):
+    h, w = img.shape[:2]
+    features = np.zeros((h//step * w//step, 128))
+    i = 0
+    for y in range(0, h, step):
+        for x in range(0, w, step):
+            if x + 16 >= w or y + 16 >= h:
+                continue
+            features[i] = sift_descriptor(img[y:y+16, x:x+16])
+    return features
+
+
+def simple_sift_vocab(img, vocab):
+    hist = np.zeros(vocab.shape[0])
+    descriptors = simple_sift_image(img, step=16)
+    D = cdist(descriptors, vocab)
+
+    for row in range(D.shape[0]):
+        hist[np.argmin(D[row])] += 1
+
+    return hist / np.linalg.norm(hist)
+
+
+def build_vocab_simple(image_paths, vocab_size):
+    dim = 128
+    subsample = 20
+
+    sift_features = np.zeros((subsample * len(image_paths), dim))
+    for idx, p in enumerate(image_paths):
+        img_gray = load_image_gray(p)
+        descriptors = simple_sift_image(img_gray, step=16)
+
+        indizes = np.random.randint(
+            low=0, high=descriptors.shape[0], size=subsample)
+        for i, j in enumerate(indizes):
+            sift_features[i + subsample * idx] = descriptors[j]
+
+    return vlfeat.kmeans.kmeans(sift_features, vocab_size, algorithm='ELKAN')
+
+
+def bags_of_sifts_simple(image_paths, vocab_filename):
+    # load vocabulary
+    with open(vocab_filename, 'rb') as f:
+        vocab = pickle.load(f)
+    print('loaded vocab for simple sift')
+    vocab_size = vocab.shape[0]
+    # dummy features variable
+    feats = np.zeros((len(image_paths), vocab_size))
+
+    for img_idx, p in enumerate(image_paths):
+        feats[img_idx] = simple_sift_vocab(load_image_gray(p), vocab)
+    return feats
 
 
 def bags_of_sifts(image_paths, vocab_filename):
@@ -124,24 +255,17 @@ def bags_of_sifts(image_paths, vocab_filename):
     with open(vocab_filename, 'rb') as f:
         vocab = pickle.load(f)
 
+    vocab_size = vocab.shape[0]
     # dummy features variable
-    feats = []
+    feats = np.zeros((len(image_paths), vocab_size))
 
-    #############################################################################
-    # TODO: YOUR CODE HERE                                                      #
-    #############################################################################
-
-    raise NotImplementedError('`get_bags_of_sifts` function needs to be implemented')
-
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
-
+    for img_idx, p in enumerate(image_paths):
+        feats[img_idx] = dense_sift(load_image_gray(p), vocab)
     return feats
 
 
 def nearest_neighbor_classifier(train_image_feats, train_labels, test_image_feats,
-    metric='euclidean'):
+                                metric='euclidean'):
     """
       This function will predict the category for every test image by finding
       the training image with most similar features. Instead of 1 nearest
@@ -175,17 +299,15 @@ def nearest_neighbor_classifier(train_image_feats, train_labels, test_image_feat
       -   test_labels: M element list, where each entry is a string indicating the
               predicted category for each testing image
     """
-    test_labels = []
 
-    #############################################################################
-    # TODO: YOUR CODE HERE                                                      #
-    #############################################################################
+    k = 5
+    test_labels = [''] * test_image_feats.shape[0]
 
-    raise NotImplementedError('`nearest_neighbor_classify` function needs to be implemented')
-
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
+    D = cdist(test_image_feats, train_image_feats)
+    for row in range(D.shape[0]):
+        distances = D[row]
+        labels = [train_labels[i] for i in np.argpartition(distances, k)[:k]]
+        test_labels[row] = max(set(labels), key=labels.count)
 
     return test_labels
 
@@ -193,7 +315,7 @@ def nearest_neighbor_classifier(train_image_feats, train_labels, test_image_feat
 def svm_classify(train_image_feats, train_labels, test_image_feats):
     """
     This function will train a one-versus-one support vector machine (SVM)
-    and then use the learned classifiers to predict the category of every test image. 
+    and then use the learned classifiers to predict the category of every test image.
 
     Useful functions:
     -   sklearn SVC: One-versus-One approach
@@ -215,17 +337,23 @@ def svm_classify(train_image_feats, train_labels, test_image_feats):
     categories = list(set(train_labels))
     test_labels = []
 
-    #############################################################################
-    # TODO: YOUR CODE HERE                                                      #
-    #############################################################################
-    
-    raise NotImplementedError('`svm_classify` function needs to be implemented')
+    clf = SVC(gamma='scale', decision_function_shape='ovo')
+    clf.fit(train_image_feats, train_labels)
+    return clf.predict(test_image_feats)
 
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
 
-    return test_labels
+def spatial_pyramid(img, vocab, level, depth):
+    if level == depth:
+        return np.array([])
+    h, w = img.shape[:2]
+    weight = 1 / 2**(depth if level == 0 else depth - level + 1)
+    return np.concatenate(
+        (dense_sift(img, vocab) * weight,
+         spatial_pyramid(img[:h//2, :w//2], vocab, level + 1, depth),
+         spatial_pyramid(img[:h//2, w//2:], vocab, level + 1, depth),
+         spatial_pyramid(img[h//2:, :w//2], vocab, level + 1, depth),
+         spatial_pyramid(img[h//2:, w//2:], vocab, level + 1, depth)),
+        axis=0)
 
 
 def bags_of_sifts_spm(image_paths, vocab_filename, depth):
@@ -240,7 +368,7 @@ def bags_of_sifts_spm(image_paths, vocab_filename, depth):
           as a parameter to avoid recomputing the vocabulary every run.
     :param depth: Depth L of spatial pyramid. Divide images and compute (sum)
           bags-of-sifts for all image partitions for all pyramid levels.
-          Refer to the explanation in the notebook, tutorial slide and the 
+          Refer to the explanation in the notebook, tutorial slide and the
           original paper (Lazebnik et al. 2006.) for more details.
 
     :return image_feats: N x d matrix, where d is the dimensionality of the
@@ -250,18 +378,14 @@ def bags_of_sifts_spm(image_paths, vocab_filename, depth):
     """
     with open(vocab_filename, 'rb') as f:
         vocab = pickle.load(f)
-    
+
     vocab_size = vocab.shape[0]
     feats = []
 
-    #############################################################################
-    # TODO: YOUR CODE HERE                                                      #
-    #############################################################################
+    with mp.Pool(mp.cpu_count()) as pool:
+        args = [(load_image_gray(p), vocab, 0, depth) for p in image_paths]
+        feats = pool.starmap(spatial_pyramid, args)
 
-    raise NotImplementedError('`get_bags_of_sifts` function needs to be implemented')
-
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
-
-    return feats
+    feats = np.array(feats)
+    print(feats.shape)
+    return np.array(feats)
