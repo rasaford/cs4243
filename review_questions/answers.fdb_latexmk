@@ -1,6 +1,6 @@
 # Fdb version 3
-["pdflatex"] 1571904769 "/Users/databook/projects/src/github.com/rasaford/cs4243/review_questions/answers.tex" "answers.pdf" "answers" 1571904770
-  "/Users/databook/projects/src/github.com/rasaford/cs4243/review_questions/answers.tex" 1571904769 6301 8cd6509560689ff1d4d48c93f603e9b2 ""
+["pdflatex"] 1572334833 "/Users/databook/projects/src/github.com/rasaford/cs4243/review_questions/answers.tex" "answers.pdf" "answers" 1572334874
+  "/Users/databook/projects/src/github.com/rasaford/cs4243/review_questions/answers.tex" 1572334874 7237 a5f19aec8f46634398becc3040b1e973 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1480098666 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/jknappen/ec/ecbx1200.tfm" 1480098696 3584 402da0b29eafbad07963b1224b222f18 ""
@@ -33,6 +33,7 @@
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb" 1480098733 32734 69e00a6b65cedb993666e42eedb3d48f ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb" 1480098733 32726 0a1aea6fcd6468ee2cf64d891f5c43c8 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1480098733 32569 5e5ddc8df908dea60932f3c484a54c0d ""
+  "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb" 1480098733 32626 4f5c1b83753b1dd3a97d1b399a005b4b ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb" 1480098737 140176 d4962f948b4cc0adf4d3dde77a128c95 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb" 1480098737 139826 9213617a7cb78635fc326b859c0b2273 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb" 1480098737 145929 f25e56369a345c4ff583b067cd87ce8e ""
@@ -101,13 +102,13 @@
   "/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1523934492 2717033 f61a5287d9c22a39a74f1979fe3f905c ""
   "/usr/local/texlive/2018/texmf-var/web2c/pdftex/pdflatex.fmt" 1539597473 4220281 af269308e2e6e4d63629ab0f8d2fea26 ""
   "/usr/local/texlive/2018/texmf.cnf" 1523934483 577 0b39adfd7c93507ff20c9c14c2f1a33f ""
-  "answers.aux" 1571904770 874 8aa6c8c697eb58f9918fd4528cb9eca8 ""
-  "answers.out" 1571904770 0 d41d8cd98f00b204e9800998ecf8427e ""
-  "answers.tex" 1571904769 6301 8cd6509560689ff1d4d48c93f603e9b2 ""
+  "answers.aux" 1572334833 874 8aa6c8c697eb58f9918fd4528cb9eca8 ""
+  "answers.out" 1572334833 0 d41d8cd98f00b204e9800998ecf8427e ""
+  "answers.tex" 1572334874 7237 a5f19aec8f46634398becc3040b1e973 ""
   "fig/filters.pdf" 1571904034 886783 98aad38303f853b128b85934820c51ce ""
   "preamble.sty" 1571885508 1044 3d8ea9fdd5a9b9e25b4a05923e02f8e8 ""
   (generated)
   "answers.aux"
   "answers.pdf"
-  "answers.log"
   "answers.out"
+  "answers.log"

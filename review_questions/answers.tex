@@ -137,15 +137,22 @@ Matching of equations to functions:
     \end{figure}
     
     \begin{enumerate}
-        \item \textbf{Input image}:
-        \item \textbf{Filter Bank}:
-        \item \textbf{Filter Response}:
-        \item \textbf{Threshold}:
-        \item \textbf{Filter Aggregation}:
+        \item \textbf{Input image}: Image is cropped to a fixed size.
+        \item \textbf{Filter Bank}: Each filter of the filter bank is convolved with the image.
+        \item \textbf{Filter Response}: For each of the filters, a response map is created, which is
+        a normalized value, of how much the image in the given window matches the filter kernel.
+        \item \textbf{Threshold}: A threshold is applied on every filter response pixel value \( p \)
+        in the form of \( p' = \min(p, \tau_i) \), where \( \tau_i \) is the maximal response allowed for each filter kernel \( \kappa_i \).
+        \item \textbf{Filter Aggregation}: The responses for each of the filters is collected 
+        after applying the threshold and if a certain set of filter responses show a low enough
+        response in local image patches, the image is marked as a faulty fabric.
     \end{enumerate}
 
-    \item for detecting each of the faults in the given images, 
-        the Threshold and aggregation sections of the classifier needs to be fitted to 
-        classify them as faults. 
+    When training this algorithm, the goal is to identify the set of filter kernels
+    in the aggregation step, which when giving a low response correspond to a faulty fabric.
+
+    \item For detecting each of the faults in the given images, 
+        the Threshold and aggregation sections of the classifier needs to be fitted to
+        make sure they are classified as faulty. Therefore these images are used as training examples.
 \end{enumerate}
 \end{document}
