@@ -1,6 +1,6 @@
 # Fdb version 3
-["pdflatex"] 1572334833 "/Users/databook/projects/src/github.com/rasaford/cs4243/review_questions/answers.tex" "answers.pdf" "answers" 1572334874
-  "/Users/databook/projects/src/github.com/rasaford/cs4243/review_questions/answers.tex" 1572334874 7237 a5f19aec8f46634398becc3040b1e973 ""
+["pdflatex"] 1572334995 "/Users/databook/projects/src/github.com/rasaford/cs4243/review_questions/answers.tex" "answers.pdf" "answers" 1572334996
+  "/Users/databook/projects/src/github.com/rasaford/cs4243/review_questions/answers.tex" 1572334995 7429 119c048a046bcdf7d7db2f5dc34375e2 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1480098666 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/local/texlive/2018/texmf-dist/fonts/tfm/jknappen/ec/ecbx1200.tfm" 1480098696 3584 402da0b29eafbad07963b1224b222f18 ""
@@ -102,13 +102,13 @@
   "/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1523934492 2717033 f61a5287d9c22a39a74f1979fe3f905c ""
   "/usr/local/texlive/2018/texmf-var/web2c/pdftex/pdflatex.fmt" 1539597473 4220281 af269308e2e6e4d63629ab0f8d2fea26 ""
   "/usr/local/texlive/2018/texmf.cnf" 1523934483 577 0b39adfd7c93507ff20c9c14c2f1a33f ""
-  "answers.aux" 1572334833 874 8aa6c8c697eb58f9918fd4528cb9eca8 ""
-  "answers.out" 1572334833 0 d41d8cd98f00b204e9800998ecf8427e ""
-  "answers.tex" 1572334874 7237 a5f19aec8f46634398becc3040b1e973 ""
+  "answers.aux" 1572334996 874 8aa6c8c697eb58f9918fd4528cb9eca8 ""
+  "answers.out" 1572334995 0 d41d8cd98f00b204e9800998ecf8427e ""
+  "answers.tex" 1572334995 7429 119c048a046bcdf7d7db2f5dc34375e2 ""
   "fig/filters.pdf" 1571904034 886783 98aad38303f853b128b85934820c51ce ""
   "preamble.sty" 1571885508 1044 3d8ea9fdd5a9b9e25b4a05923e02f8e8 ""
   (generated)
+  "answers.log"
+  "answers.out"
   "answers.aux"
   "answers.pdf"
-  "answers.out"
-  "answers.log"
